@@ -1,42 +1,42 @@
 classdef Terminal < handle
-    %固定指标下（包括调度策略）的
+    %
     properties (Access = public)
-        num                     %终端数
-        ts_total                %模拟总持续的时隙数
-        lambda                  %数据包到达的伯努利过程lambda
-        pn                      %数据包传输中断概率
-        alpha                   %每个设备的重要程度
+         num % number of terminals
+         ts_total % simulates the total duration of time slots
+         lambda % Bernoulli process lambda of packet arrival
+         pn % packet transmission interruption probability
+         alpha % importance of each device
         
-        max_arrival_interval    %最大到达间隔
-        max_transport_interval  %最大传输间隔
+         max_arrival_interval % maximum arrival interval
+         max_transport_interval % maximum transmission interval
 
-        data_state              %当前时隙的状态
+         data_state % the state of the current time slot
         
-        AoIdata                 %终端的数据包的信息年龄
-        AoIaddup                %终端的信息年龄累加
+         AoIdata % The information age of the terminal's data packet
+         AoIaddup % terminal information age accumulation
 
-        pAoI_num                %本次模拟取到的峰值信息年龄的次数
-        PAoIaddup               %终端的峰值信息年龄累加
-        wPAoImax                %加权最大峰值信息年龄
+         pAoI_num % The number of peak information ages obtained in this simulation
+         PAoIaddup % terminal peak information age accumulation
+         wPAoImax % weighted maximum peak information age
 
-        ph_avg_terminal         %每个终端的平均峰值信息年龄 num*1
-        ph_avg_system           %整个系统的平均峰值信息年龄 1*1
+         ph_avg_terminal % average peak information age of each terminal num*1
+         ph_avg_system % The average peak information age of the entire system 1*1
 
-        Scheduling_id           %记录当前时隙调度的终端号
-        Scheduling_Times        %记录每个终端的调度的次数
+         Scheduling_id %Record the terminal number of the current time slot scheduling
+         Scheduling_Times% records the number of times each terminal is scheduled
 
-        strategy                %调度策略
-        proportion              %基于调度比例约束的排队时延最优策略下的最优调度比例
-        proportion_pro
+         strategy % scheduling strategy
+         proportion % The optimal scheduling ratio under the optimal strategy of queuing delay based on scheduling ratio constraints
+         proportion_pro
 
-        random_mode             
-        simulation_mode         %仿真模式
+         random_mode
+         simulation_mode % simulation mode
 
-        TsBlock                %这是一个行向量
+         TsBlock % This is a row vector
     end
     
     methods (Access = public)
-        %构造函数
+        %Constructor
         function obj = Terminal(num_in, ts_t, lambda_in, pn_in, strategy_name_in, alpha_in, random_mode_in, simu_mode_in) %lambda_in, pn_in可为空
             obj.num = num_in;
             obj.ts_total = ts_t;
@@ -44,23 +44,23 @@ classdef Terminal < handle
             if isempty(lambda_in)
                 obj.lambda = rand(obj.num, 1);
             else
-                assert(size(lambda_in,1)==num_in, 'lambda_in输入维度错误')
+                assert(size(lambda_in,1)==num_in, 'lambda_in wrong input dimension')
                 obj.lambda = lambda_in;
             end
             
             if isempty(pn_in)
                 obj.pn = rand(obj.num, 1);
             else
-                assert(size(pn_in,1)==num_in, 'pn_in输入维度错误')
+                assert(size(pn_in,1)==num_in, 'pn_in wrong input dimension')
                 obj.pn = pn_in;
             end
             
-            assert(size(alpha_in,1)==num_in, 'alpha_in输入维度错误')
+            assert(size(alpha_in,1)==num_in, 'alpha_in wrong input dimension')
             obj.alpha = alpha_in/sum(alpha_in);
             %obj.alpha = alpha_in;
-            %初始化
-            obj.data_state = [ones(obj.num, 3), zeros(obj.num, 4)]; %默认初始时刻有包
-            obj.AoIdata = zeros(obj.num, 2, 2);                     %只记录上一时隙和当前时隙
+
+            obj.data_state = [ones(obj.num, 3), zeros(obj.num, 4)]; %By default, there are packages at the initial moment
+            obj.AoIdata = zeros(obj.num, 2, 2);                     %Only record the last time slot and the current time slot
             obj.AoIaddup = [];                       
             obj.pAoI_num = [];
             obj.PAoIaddup = [];
@@ -72,15 +72,15 @@ classdef Terminal < handle
             obj.proportion = zeros(num_in, 1);
             obj.proportion_pro = zeros(num_in, 1);
             obj.strategy = Strategy(strategy_name_in);
-            obj.max_arrival_interval = zeros(ts_t + 1, 1);          %最后一个元素记录对应的终端号
-            obj.max_transport_interval = zeros(2, 1);               %一个记录上一个时隙(1)，一个记录当前时隙(2)
+            obj.max_arrival_interval = zeros(ts_t + 1, 1);          %The terminal number corresponding to the last element record
+            obj.max_transport_interval = zeros(2, 1);               %One to record the previous time slot (1), one to record the current time slot (2)
             obj.random_mode = random_mode_in;
             obj.simulation_mode = simu_mode_in;
             obj.TsBlock = [];
         end
         
-        %获取包(同时获取)
-        function get_data(obj, ts, ArrLogiMat)%ts - 当前时隙
+        %get package (get at the same time)
+        function get_data(obj, ts, ArrLogiMat)%ts - current time slot
             persistent ts_prov_array
 
             if(ts == 1)                                    
@@ -88,11 +88,11 @@ classdef Terminal < handle
             end
 
             tem = ArrLogiMat(:, ts);
-            obj.data_state(tem, 1) = ones(sum(tem), 1);    %有包到达
-            obj.data_state(tem, 2) = ts*ones(sum(tem), 1); %新包到达的时间 
+            obj.data_state(tem, 1) = ones(sum(tem), 1);    %package arrives
+            obj.data_state(tem, 2) = ts*ones(sum(tem), 1); %The time the new package arrives
 
             idArray = 1:obj.num;
-            %开始记录包的到达间隔
+            %Start recording packet arrival intervals
             if(ts ~= obj.ts_total)
                 max_tem = ts - min(ts_prov_array(tem));
                 idat = idArray(tem);
@@ -109,7 +109,7 @@ classdef Terminal < handle
                 id = id(randperm(length(id), 1));
             end
             
-            ts_prov_array(tem) = ts*ones(sum(tem), 1);     %记录新包到的时间
+            ts_prov_array(tem) = ts*ones(sum(tem), 1);     %Record the time when new packages arrive
             assert(length(max_tem) == 1, mat2str(size(max_tem)));
             if(ts == 1)
                 obj.max_arrival_interval(ts) = max_tem;
@@ -125,9 +125,10 @@ classdef Terminal < handle
         end
         
         
-        %终端向中央发送数据
-        function ts_tem = transport(obj, id, ts, TransRandMat)%id-由决策过程决定的索引(假设收到决策后立即开始传,传输时延为1时隙)
-            %传递决策信息，开始传输
+        %The terminal sends data to the central
+        function ts_tem = transport(obj, id, ts, TransRandMat)%id-The index determined by the decision-making process
+            % (assuming that the transmission starts immediately after receiving the decision, and the transmission delay is 1 slot)
+            %Transfer decision information, start transmission
             r = TransRandMat(ts);
             ts_tem = 0;
             persistent ts_prov_array
@@ -137,18 +138,18 @@ classdef Terminal < handle
             trans_flag = r > obj.pn(id);
             if id > 0 && id <= obj.num
                 if obj.data_state(id, 1)
-                    if trans_flag       %传输不中断，当前时隙开始传
+                    if trans_flag       %The transmission is not interrupted, and the current time slot starts to transmit
                         obj.data_state(id, 6) = 1;
                         obj.data_state(id, 5) = ts;
                         ts_tem = obj.data_state(id, 2);
                         obj.Scheduling_id(ts) = id;
-                        obj.Scheduling_Times(id) = obj.Scheduling_Times(id) + 1;    %传输未中断才算调度一次
+                        obj.Scheduling_Times(id) = obj.Scheduling_Times(id) + 1;    %The transmission is not interrupted before it is scheduled once
                     else
                         obj.data_state(id, 6) = 0;
                     end
                 end
-                obj.data_state(id, 1) = 0;%无论如何，包发送后，终端无包
-                obj.data_state(id, 2) = 0;%最新包到达时隙为0，即无包到达，
+                obj.data_state(id, 1) = 0;%In any case, after the packet is sent, there is no packet in the terminal
+                obj.data_state(id, 2) = 0;%The latest packet arrival time slot is 0, that is, no packet arrives,
                 
             end
             
@@ -160,9 +161,9 @@ classdef Terminal < handle
                 ts_prov_array = zeros(obj.num, 1);     
             end
 
-            %开始记录包的传输间隔
+            %Start recording packet transmission interval
             max_tem = (ts - ts_prov_array(id)) * obj.alpha(id);
-            %更新上个时隙
+            %Update last time slot
             obj.max_transport_interval(1) = obj.max_transport_interval(2);  
             assert(length(max_tem) == 1, mat2str(size(max_tem)));
             if(ts == 1) 
@@ -176,17 +177,18 @@ classdef Terminal < handle
             ts_prov_array(id) = ts;
         end
 
-        %收包
-        function recive(obj, ts, ts_tem)%ts-当前时隙， ts_tem - 传输的包的生成时间（为0表示没有要收的包 或者 传输失败）
+        %
+        function recive(obj, ts, ts_tem)%ts - the current time slot, 
+            % ts_tem - the generation time of the transmitted packet (0 means there is no packet to receive or the transmission failed)
             assert(ts > ts_tem, "input error -> ts_tem");
             if(ts_tem == 0)
                 return
             end
-             %判断其它传输是否到达   
+             %Determine whether other transmissions have arrived
             row_logi = obj.data_state(:, 6) == 1;
             if ~all(row_logi == 0)
                 if ts >= obj.data_state(row_logi, 5) + 1
-                    obj.data_state(row_logi, 6) = 0;%包成功到达,传输置0
+                    obj.data_state(row_logi, 6) = 0;%The packet arrives successfully, and the transmission is set to 0
                     obj.data_state(row_logi, 3) = 1;
                     obj.data_state(row_logi, 4) = ts_tem;
                 end
@@ -194,25 +196,25 @@ classdef Terminal < handle
         end
 
        
-        %计算终端包的排队等待时间
+        %
         function calculate_WT(obj, ts)
             obj.data_state(:, 7) = (ts - obj.data_state(:, 2)).*obj.data_state(:, 1);
         end
 
-        %计算当前时隙终端与中央基站间的信息年龄
+        %Calculate the information age between the current slot terminal and the central base station
         function calculate_AoI(obj, ts)
-            obj.AoIdata(:, 1, :) = obj.AoIdata(:, 2, :);                             %更新上个时隙
-            obj.AoIdata(:, 2, 1) = (ts - obj.data_state(:, 4)).*obj.data_state(:, 3);%计算中央基站最新收到的包的AoI
-            obj.AoIdata(:, 2, 2) = (ts - obj.data_state(:, 2)).*obj.data_state(:, 1);%计算终端最新收到的包的AoI
+            obj.AoIdata(:, 1, :) = obj.AoIdata(:, 2, :);                             %Update last time slot
+            obj.AoIdata(:, 2, 1) = (ts - obj.data_state(:, 4)).*obj.data_state(:, 3);%Calculate the AoI of the latest packet received by the central base station
+            obj.AoIdata(:, 2, 2) = (ts - obj.data_state(:, 2)).*obj.data_state(:, 1);%Calculate the AoI of the latest packet received by the terminal
             col_logi = obj.TsBlock >= ts;
             obj.AoIaddup(:, col_logi) = obj.AoIaddup(:, col_logi) + repmat(obj.AoIdata(:, 2, 1), 1, sum(col_logi));
             if ts >= 2
                 row_logi = obj.AoIdata(:, 2, 1) <= obj.AoIdata(:, 1, 1);
-                %col_logi不用再次计算，这里相同
+                
                 pAoI = obj.AoIdata(row_logi, 1, 1);
                 wPAoI = pAoI .* obj.alpha(row_logi);
                 obj.PAoIaddup(row_logi, col_logi) = obj.PAoIaddup(row_logi, col_logi) + repmat(pAoI, 1, sum(col_logi));
-                obj.pAoI_num(row_logi, col_logi) = obj.pAoI_num(row_logi,col_logi) + 1; %记录达到峰值信息年龄的次数
+                obj.pAoI_num(row_logi, col_logi) = obj.pAoI_num(row_logi,col_logi) + 1; %Record the number of times the peak message age is reached
                 
                 idarray = (1:obj.num)';
                 idarray = idarray(row_logi);
@@ -221,18 +223,17 @@ classdef Terminal < handle
                 obj.wPAoImax(idarray, col_logi) = repmat(wPAoI(row_logi), 1, sum(col_logi));
             end
             
-            if ts == obj.ts_total %最后时隙
+            if ts == obj.ts_total %last slot
                 row_logi = obj.AoIdata(:, 2, 1) ~= 0;
                 obj.PAoIaddup(row_logi, end) = obj.PAoIaddup(row_logi, end) + obj.AoIdata(row_logi, 2, 1);
-                obj.pAoI_num(row_logi,end) = obj.pAoI_num(row_logi,end) + 1; %记录达到峰值信息年龄的次数
+                obj.pAoI_num(row_logi,end) = obj.pAoI_num(row_logi,end) + 1; %Record the number of times the peak message age is reached
             end
         end
 
-        %计算基于调度比例约束的排队时延最优策略下的最优调度比例
+        %Calculate the optimal scheduling ratio under the optimal strategy of queuing delay based on scheduling ratio constraints
         function calculate_proportion(obj)
             %fun = @(x)mean(sum((obj.alpha)'.*(1./x)));
             %obj.proportion = fmincon(fun, 1/obj.num*ones(1, obj.num), ones(1, obj.num), 1, ones(1, obj.num), 1, zeros(1, obj.num), ones(1, obj.num));
-            %效果应该不是很好，可以考虑用粒子群
             %obj.proportion = sqrt(obj.alpha ./ (1 - obj.pn))./sum(sqrt(obj.alpha ./ (1 - obj.pn)));
             obj.proportion_pro = obj.alpha ./ (1 - obj.pn)./ (sum(obj.alpha ./ (1 - obj.pn)));
             %obj.proportion = fmincon(fun, sqrt(obj.alpha)./sum(sqrt(obj.alpha)), ones(1, obj.num), 1, ...
@@ -243,14 +244,14 @@ classdef Terminal < handle
             obj.proportion = min(obj.lambda, sqrt( obj.alpha ./ (( 1 - obj.pn) .* v) ));
         end
         
-        %仿真
+        %
         function [theoretical_lower_bound, STI, MAI, theoretical_lower_bound_phmax] = simulation_start(obj, simu_rounds, ts_block)
             assert(ts_block(end) == obj.ts_total);
             obj.TsBlock = ts_block';
             obj.AoIaddup = zeros(obj.num, length(ts_block));
-            obj.PAoIaddup = obj.AoIaddup;                           %相同的初始化值
-            obj.wPAoImax = obj.AoIaddup;                            %相同的初始化值
-            obj.pAoI_num = obj.AoIaddup;                            %相同的初始化值
+            obj.PAoIaddup = obj.AoIaddup;                           %the same initialization value
+            obj.wPAoImax = obj.AoIaddup;                            %the same initialization value
+            obj.pAoI_num = obj.AoIaddup;                            %the same initialization value
 
             [ArrLogiMat, TransRandMat] = obj.Generate_RandMat(simu_rounds);
             obj.calculate_proportion();
@@ -295,10 +296,10 @@ classdef Terminal < handle
 
             clear Generate_RandMat
         end
-
-        %计算终端平均加权峰值信息年龄pAoI_avg
-        %计算终端平均加权信息年龄 AoI_avg
-        function value_struct = calculate(obj, ts_block) %返回中央基站的包的(平均峰值信息年龄 1*1， 平均AoI， maxpAoI)
+    
+         % Calculate terminal average weighted peak information age pAoI_avg
+         % Calculate terminal average weighted information age AoI_avg
+        function value_struct = calculate(obj, ts_block) %(average peak information age 1*1, average AoI, maxpAoI) of packets returned to central base station
             assert(ts_block(end) == obj.ts_total);
             value_struct.phavg = zeros(1, length(ts_block));
             value_struct.AoI_avg_system = zeros(1, length(ts_block));
@@ -308,11 +309,11 @@ classdef Terminal < handle
                 ts_tem_top = ts_block(rounds);
                 % AoI_avg_terminal = zeros(obj.num, 1);
                 % pAoI_max_terminal = zeros(obj.num, 1);
-                %计算每个终端平均峰值AoI
+                %Calculate the average peak AoI of each terminal
                 obj.ph_avg_terminal = obj.PAoIaddup(:, rounds) ./ obj.pAoI_num(:, rounds);
-                %计算每个终端平均AoI
+                %Calculate the average AoI of each terminal
                 AoI_avg_terminal = obj.AoIaddup(:, rounds) / ts_tem_top;
-                %得到每个终端的最大pAoI -> obj.wPAoImax(:, rounds)
+                %Get the maximum pAoI per terminal -> obj.wPAoImax(:, rounds)
                 PAoImax = obj.wPAoImax(:, rounds) ./ obj.alpha;
                 pAoI_max_terminal = max(PAoImax);
 
@@ -327,7 +328,7 @@ classdef Terminal < handle
             end
         end
 
-        %绘制系统的平均峰值信息年龄序列图
+        %Plot the average peak information age series plot of the system
         function [figure_obj, pic_obj, ax_obj] = pic_pAoIavg(obj) 
             figure_obj = figure('Name', char(datetime), 'NumberTitle', 'off');
             pic_obj = stem(obj.ph_avg_terminal, 'k', 'LineWidth', 1.5, 'MarkerSize', 2);
@@ -349,16 +350,16 @@ classdef Terminal < handle
             if(isempty(simulation_rounds))
                 simulation_rounds = 0;
             end
-            %开启设置随机种子条件：相同随机模式、同仿真轮次
+            %Enable setting random seed conditions: same random mode, same simulation round
             if( obj.random_mode && simulation_rounds ~= simu_rounds)
                 simulation_rounds = simu_rounds;
                 rand_send = randperm(3696, 1);
                 %disp(['The random seed setting for the current simulation is complete:', num2str(rand_send)]);
             end
 
-            if(obj.random_mode == 0) %完全随机模式
+            if(obj.random_mode == 0) %completely random pattern
                 rng('shuffle');
-            else                         %相同随机模式（只有到达相同，中断可能相同）
+            else                         %Same random pattern (only arrivals are the same, interrupts may be the same)
                 rng(rand_send);
             end
             rand_ArrMat = rand(obj.num, obj.ts_total);

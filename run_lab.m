@@ -18,16 +18,16 @@ function run_lab(cfg, mode)
             i = randperm(4, 1);
             switch i
                 case 1
-                    disp('默认执行config_benchmark_tsc');
+                    disp('Execute by default: config_benchmark_tsc');
                     run_sim(@config_benchmark_tsc, save_);
                 case 2
-                    disp('默认执行config_benchmark_ter');
+                    disp('Execute by default: config_benchmark_ter');
                     run_sim(@config_benchmark_ter, save_);
                 case 3
-                    disp('默认执行config_benchmark_pn');
+                    disp('Execute by default: config_benchmark_pn');
                     run_sim(@config_benchmark_pn, save_);
                 case 4
-                    disp('默认执行config_benchmark_lbd')
+                    disp('Execute by default: config_benchmark_lbd')
                     run_sim(@config_benchmark_lbd, save_);
             end
             

@@ -2,68 +2,68 @@ classdef Strategy < handle
 
     properties (Access = public)
         strategy_name %char
-        strategy_func %调度函数
+        strategy_func %Scheduling function
         flag
     end
 
     methods (Access = public)
-        %构造函数
+        %Constructor
         function obj = Strategy(strategy_name_in)
             obj.strategy_name = strategy_name_in;
             obj.flag = 0;
             switch obj.strategy_name
-                case "Manual"                           %手动
+                case "Manual"
                     obj.strategy_func = @obj.strategy_manual;
-                case "Random"                           %完全随机调度
+                case "Random"                           %Complete random scheduling
                     obj.strategy_func = @obj.strategy_rand;
-                case "weight-based Random"              %基于权重的随机调度
+                case "weight-based Random"              %Random scheduling based on weight
                     obj.strategy_func = @obj.strategy_rand_wb;
                 case "proportion-based Random"
                     obj.strategy_func = @obj.strategy_rand_wp;
-                case "TG"                               %传统贪心策略
+                case "TG"                               %Traditional greed strategy
                     obj.strategy_func = @obj.strategy_TG;
-                case "Greedy"                           %贪婪策略
+                case "Greedy"                           %greed strategy
                     obj.strategy_func = @obj.strategy_greedy;
-                case "weight-based Greedy"              %基于权重的贪婪策略
+                case "weight-based Greedy"              %Greedy strategy based on weight
                     obj.strategy_func = @obj.strategy_greedy_wb;
-                case "Proportion"                       %基于调度比例约束的排队时延最优策略1
+                case "Proportion"                       %Based on the scheduling ratio constraint, queuing delay strategy 1
                     obj.strategy_func = @obj.strategy_proportion;
-                case "ProportionPro"                    %Proportion改进
+                case "ProportionPro"                    %Proportion improvement
                     obj.strategy_func = @obj.strategy_proportion_pro;
-                case "ProportionNB"                     %基于调度比例约束的排队时延最优策略2
+                case "ProportionNB"                     %Based on the scheduling ratio constraint, queuing delay strategy 2
                     obj.strategy_func = @obj.strategy_proportion_nb;
                 case "ProportionNBPro"
                     obj.strategy_func = @obj.strategy_proportion_nb_pro;
-                case "Ladder"                           %阶梯
+                case "Ladder" 
                     obj.strategy_func = @obj.strategy_ladder;
-                case "FastLadder"                       %快速阶梯
+                case "FastLadder"
                     obj.strategy_func = @obj.strategy_ladder;
                     obj.flag = 1;
-                case "LadderPro"                        %阶梯改进
+                case "LadderPro" 
                     obj.strategy_func = @obj.strategy_ladderpro;
-                case "FastLadderPro"                    %快速阶梯改进
+                case "FastLadderPro" 
                     obj.strategy_func = @obj.strategy_ladderpro;
                     obj.flag = 1;
-                case "weight-based LP"                  %基于权重的阶梯改进
+                case "weight-based LP"                  %Weight-Based Ladder Improvement
                     obj.strategy_func = @obj.strategy_ladderpro_wb;
-                case "weight-based FLP"                 %基于权重的快速阶梯改进
+                case "weight-based FLP"                 %Weight-based Fast Ladder Improvement
                     obj.strategy_func = @obj.strategy_ladderpro_wb;
                     obj.flag = 1;
-                case "Hybrid"                           %杂交策略
+                case "Hybrid"                           %
                     obj.strategy_func = @obj.strategy_hybrid;
-                case "FastHybrid"                       %快速杂交策略
+                case "FastHybrid"                       %
                     obj.strategy_func = @obj.strategy_hybrid;
                     obj.flag = 1;
-                case "MWAoI"                            %最大权重AoI
+                case "MWAoI"                            %Maximum Weight AoI
                     obj.strategy_func = @obj.strategy_mwAoI;
-                case "WIP"                              %惠特尔索引策略
+                case "WIP"                              %Whittle Indexing Strategy
                     obj.strategy_func = @obj.strategy_WIP;
-                otherwise                               %无法识别的策略名
+                otherwise 
                     error(['Strategy error, unrecognized strategy name', obj.strategy_name]);
             end
         end
         
-        %调度
+        %scheduling
         function id = Scheduling(obj, terminal_obj, ts)
             id = obj.strategy_func(terminal_obj, ts, obj.flag);
         end
@@ -71,13 +71,13 @@ classdef Strategy < handle
     end
 
     methods (Access = private)
-        %手动
+        %manual
         function id = strategy_manual(obj, terminal_obj, ts, ~)
             persistent fast_flag
             if(ts == 1 || isempty(fast_flag))
-                fast_flag = input("是否使用快速算法(0/1)？\n");
+                fast_flag = input("Whether to use fast algorithm(0/1)？\n");
             end
-            %fast_flag 是否使用快速算法(0-不使用 1使用)
+            %fast_flagWhether to use the fast algorithm (0-not use 1 use)
             if(ts <= terminal_obj.num && fast_flag)
                 id = obj.strategy_greedy(terminal_obj, ts);
                 return;
@@ -86,18 +86,18 @@ classdef Strategy < handle
             if(isempty(figure_obj_cell) || ts == 1)
                 figure_obj_cell = cell(1,3);
             end
-            AoICur = terminal_obj.AoIdata(:, 2, 1);                                     %当前时隙每个终端的信息年龄(num*1)
+            AoICur = terminal_obj.AoIdata(:, 2, 1);                                     %The AoI of each terminal in the current slot(num*1)
             lambdaCur = terminal_obj.lambda;
             pnCur = terminal_obj.pn;
             numCur = terminal_obj.num;
 
             idArray = 1:numCur;
             [~, SortToIdArray] = sort(-(AoICur - 0.5 * lambdaCur .* (1 - pnCur)));
-            EPAoI_sort = AoICur(SortToIdArray) + (idArray)' - 1;                        %计算EPAoI
+            EPAoI_sort = AoICur(SortToIdArray) + (idArray)' - 1;                        %calculate EPAoI
             assert(size(EPAoI_sort, 2) == 1)
             [~, IdToSortArray] = sort(SortToIdArray);
-            EPAoICur = EPAoI_sort(IdToSortArray);                                       %EPAoI每个位置与每个终端号对应
-            WTCur = terminal_obj.AoIdata(:, 2, 2);                                     %当前时刻每个终端的排队时延
+            EPAoICur = EPAoI_sort(IdToSortArray);                                       %EPAoI Each position corresponds to each terminal number
+            WTCur = terminal_obj.AoIdata(:, 2, 2);                                     %The queuing delay of each terminal at the current moment
 
             id_book = obj.find_terminal_with_data(terminal_obj);
             if(isempty(id_book))
@@ -119,7 +119,7 @@ classdef Strategy < handle
             id = 0;
         end
 
-        %完全随机调度（'Random'）
+        %completely random scheduling（'Random'）
         function id = strategy_rand(obj, terminal_obj, ~, ~)
             id_book = obj.find_terminal_with_data(terminal_obj);
             if(isempty(id_book))
@@ -129,7 +129,7 @@ classdef Strategy < handle
             id = id_book(randperm(length(id_book), 1));
         end
         
-        %基于权重的随机调度（'weight-based Random'）
+        %Weight-Based Random Scheduling（'weight-based Random'）
         function id = strategy_rand_wb(obj, terminal_obj, ~, ~)
             id_book = obj.find_terminal_with_data(terminal_obj);
             alphai = terminal_obj.alpha(id_book);
@@ -137,7 +137,7 @@ classdef Strategy < handle
             if ~isempty(id_book)
                 id = id_book(obj.Generate_roulette(length(alphai), alphai));
             else
-                id = 0;%表示不调度
+                id = 0;%Indicates no scheduling
             end
         end
 
@@ -162,9 +162,8 @@ classdef Strategy < handle
         end
         
         
-        %传统贪心
         function id = strategy_TG(obj, terminal_obj, ~, ~)
-            id_book = obj.find_terminal_with_data(terminal_obj); %应该考虑在当前时隙有包的终端
+            id_book = obj.find_terminal_with_data(terminal_obj); %Terminals that have packets in the current slot should be considered
             if(isempty(id_book))
                 id = 0;
                 return;
@@ -179,30 +178,30 @@ classdef Strategy < handle
             id = id_book(obj.Generate_roulette(length(id_book), ones(length(id_book))));
         end
 
-        %贪婪策略（'Greedy'）
+        %（'Greedy'）
         function id = strategy_greedy(obj, terminal_obj, ts, ~)
-            id_book = obj.find_terminal_with_data(terminal_obj); %应该考虑在当前时隙有包的终端
+            id_book = obj.find_terminal_with_data(terminal_obj); 
             id = obj.greedy_func(terminal_obj, ts, id_book);
         end
 
-        %基于权重的贪婪策略（'weight-based Greedy'）
+        %（'weight-based Greedy'）
         function id = strategy_greedy_wb(obj, terminal_obj, ts, ~)
-            id_book = obj.find_terminal_with_data(terminal_obj); %应该考虑在当前时隙有包的终端
+            id_book = obj.find_terminal_with_data(terminal_obj);
             id= obj.greedy_wb_func(terminal_obj, ts, id_book);
         end
         
-        %基于调度比例约束的排队时延最优策略('Proportion')
+        %('Proportion')
         function id = strategy_proportion(obj, terminal_obj, ~, ~)
-            id_book = obj.find_terminal_with_data(terminal_obj); %应该考虑在当前时隙有包的终端
+            id_book = obj.find_terminal_with_data(terminal_obj);
             if isempty(id_book)
                 id = 0;
             else
                 WT = terminal_obj.data_state(id_book, 7);
         
                 row = find(WT == min(WT));
-                %id = id_book(row(ceil(length(row)*rand(1,1))));%随机选择
+                %id = id_book(row(ceil(length(row)*rand(1,1))));%random selection
                 lambdai = terminal_obj.lambda(row);
-                id = id_book(row(obj.Generate_roulette(length(row), 1./lambdai)));%轮盘选择
+                id = id_book(row(obj.Generate_roulette(length(row), 1./lambdai)));%roulette selection
 
                 times_proportion = terminal_obj.proportion;
                 
@@ -214,7 +213,7 @@ classdef Strategy < handle
                 end
         
                 while tem
-                    id_book(id_book == id) = []; %id达到调度比例
+                    id_book(id_book == id) = []; %id reach the scheduling ratio
                     if isempty(id_book)
                         id_book_tem = obj.find_terminal_with_data(terminal_obj);
                         id = id_book_tem(ceil(length(id_book_tem)*rand(1, 1)));
@@ -224,7 +223,7 @@ classdef Strategy < handle
                     WT = terminal_obj.data_state(id_book, 7);
         
                     row = find(WT == min(WT));
-                    %id = id_book(row(ceil(length(row)*rand(1,1))));%随机选择
+                    %id = id_book(row(ceil(length(row)*rand(1,1))));%random selection
                     lambdai = terminal_obj.lambda(row);
                     id = id_book(row(obj.Generate_roulette(length(row), 1./lambdai)));
 
@@ -239,52 +238,53 @@ classdef Strategy < handle
 
         end
         
-        %基于proportion的改进策略(在调度比例不超标的终端里，调AoI最大，当AoI相同时,调排队时延最小，当排队时延相同，随机调度)
+        %(In the terminals whose scheduling ratio does not exceed the standard, adjust the AoI to be the largest. 
+        % When the AoI is the same, adjust the queuing delay to be the smallest. When the queuing delay is the same, schedule randomly)
         function id = strategy_proportion_pro(obj, terminal_obj, ts, ~)
-            id_book = obj.find_terminal_with_data(terminal_obj); %应该考虑在当前时隙有包的终端
-            if isempty(id_book)%终端无包
+            id_book = obj.find_terminal_with_data(terminal_obj); 
+            if isempty(id_book)%terminal no packet
                 id = 0;
                 return
             end
 
             id_book = obj.find_terminal_within_proportion(terminal_obj, id_book, 1, 1, terminal_obj.proportion);
-            %在id_book中选出在调度比列内的终端编号（forward=1允许返回空）
-            if isempty(id_book)%在已有的终端中没有在调度比例内的终端
-                %此时随机调度（依据到达概率）
+            %Select the terminal number in the scheduling ratio column in id_book (forward=1 allows returning empty)
+            if isempty(id_book)%There are no terminals within the scheduling ratio among the existing terminals
+                %Random scheduling at this time (according to arrival probability)
                 id_book = obj.find_terminal_with_data(terminal_obj);
                 id = id_book(obj.Generate_roulette(length(id_book), 1./terminal_obj.lambda(id_book)));
                 %disp("ProportionPro use strategy: rand based on lambda");
-            else%在已有的终端中有在调度比例内的终端
+            else%Among the existing terminals, there are terminals within the scheduling ratio
                 if(ts ~= 1)
-                    AoI_tem = terminal_obj.AoIdata(id_book, 2, 1);%选出没有在传输包（包括传输中断）的AoI
+                    AoI_tem = terminal_obj.AoIdata(id_book, 2, 1);%Select AoIs that are not transmitting packets (including transmission interruptions)
                     id_book = id_book(AoI_tem == max(AoI_tem));
                     if(length(id_book) == 1)
                         id = id_book;
                         return
                     end
                 end
-                %找排队时延最小
+                %Find the minimum queuing delay
                 WT_tem = terminal_obj.data_state(id_book, 7);
                 id_book = id_book(WT_tem == min(WT_tem));
                 if(length(id_book) == 1)
                     id = id_book;
                     return
                 end
-                %在其中随机调度（依据终端到达概率）
+                %Random scheduling among them (according to terminal arrival probability)
                 id = id_book(obj.Generate_roulette(length(id_book), 1./terminal_obj.lambda(id_book)));
 
             end
         end
 
-        %基于调度比例约束的排队时延无缓存最优策略
+        %Optimal strategy for queuing delay without caching based on scheduling ratio constraint
         function id = strategy_proportion_nb(obj, terminal_obj, ~, ~)
-            id_book = obj.find_terminal_with_data(terminal_obj); %应该考虑在当前时隙有包的终端
+            id_book = obj.find_terminal_with_data(terminal_obj); 
             id = obj.proportion_nb_func(terminal_obj, id_book, terminal_obj.proportion);
         end
 
-        %基于调度比例约束的排队时延无缓存最优策略改进版
+        %Improved version of optimal strategy for queuing delay without caching based on scheduling ratio constraint
         function id = strategy_proportion_nb_pro(obj, terminal_obj, ~, ~)
-            id_book = obj.find_terminal_with_data(terminal_obj); %应该考虑在当前时隙有包的终端
+            id_book = obj.find_terminal_with_data(terminal_obj);
             AoI = terminal_obj.AoIdata(id_book, 2, 1);
             id_book = id_book(AoI == max(AoI));
             if(length(id_book) == 1)
@@ -296,33 +296,34 @@ classdef Strategy < handle
             id = obj.proportion_nb_func(terminal_obj, id_book, proportion);
         end
         
-        %阶梯调度策略
+        %Ladder Scheduling Strategy
         function id = strategy_ladder(obj, terminal_obj, ts, fast_flag)
-            %fast_flag 是否使用快速算法(0-不使用 1使用)
+            %fast_flagWhether to use the fast algorithm (0-not use 1 use)
             if(ts <= terminal_obj.num && fast_flag)
                 id = obj.strategy_greedy(terminal_obj, ts);
                 return;
             end
 
-            %XXXCur 每个位置索引对应的都是终端号(id)
-            %EPAoI_sort 按照AoI大小排序后的EPAoI, 通过排序顺序查询EPAoI
-            %SortToIdArray 通过排序顺序查询终端号
-            %IdToSortArray 通过终端号查询排序顺序
-            AoICur = terminal_obj.AoIdata(:, 2, 1);%当前时隙每个终端的信息年龄(num*1)
-            lambdaCur = terminal_obj.lambda;        %每个终端的包到达概率（num*1）
-            pnCur = terminal_obj.pn;                %每个终端的包传输失败概率
-            numCur = terminal_obj.num;              %终端数量
-            WTCur = terminal_obj.AoIdata(:, 2, 2); %当前时刻每个终端的排队时延
+            %XXXCur Each position index corresponds to the terminal number (id)
+            %EPAoI_sort EPAoI sorted by AoI size, query EPAoI by sorting order
+            %SortToIdArray Query terminal number by sort order
+            %IdToSortArray Query sort order by terminal number
+            AoICur = terminal_obj.AoIdata(:, 2, 1);%Information age of each terminal in the current slot (num*1)
+            lambdaCur = terminal_obj.lambda;        %Packet arrival probability of each terminal (num*1)
+            pnCur = terminal_obj.pn;                %Probability of packet transmission failure for each terminal
+            numCur = terminal_obj.num;              %Number of terminals
+            WTCur = terminal_obj.AoIdata(:, 2, 2); %The queuing delay of each terminal at the current moment
 
             [~, SortToIdArray] = sort(-(AoICur - 0.5 * lambdaCur .* (1 - pnCur)));
-            %对AoI进行排序（降序），AoI相同时依据lambda*(1-pn)，越小序号越靠前
-            %乘0.5是将后者限制在小于1的范围内
-            %返回值SortToIdArray 为排序后每个位置对应的终端号（id）                                                                                                                                                    
+            %Sort the AoIs (descending order). When the AoIs are the same, it is based on lambda*(1-pn), 
+            % the smaller the sequence number, the higher the front
+            %Multiplying by 0.5 is to limit the latter to less than 1
+            %The return value SortToIdArray is the terminal number (id) corresponding to each position after sorting                                                                                                                                               
 
-            EPAoI_sort = AoICur(SortToIdArray) + (1:numCur)' - 1;                       %计算EPAoI
+            EPAoI_sort = AoICur(SortToIdArray) + (1:numCur)' - 1;                       %Calculate EPAoI
             assert(size(EPAoI_sort, 2) == 1)
             [~, IdToSortArray] = sort(SortToIdArray);
-            EPAoICur = EPAoI_sort(IdToSortArray);                                       %EPAoI每个位置与每个终端号对应
+            EPAoICur = EPAoI_sort(IdToSortArray);                                       %Each position of EPAoI corresponds to each terminal number
             
 %             if(ts == terminal_obj.ts_total)
 %                 WT_tem = WTCur;
@@ -331,62 +332,59 @@ classdef Strategy < handle
 %                 obj.stem_pic(1:numCur, EPAoICur, "EPAoI");
 %                 obj.stem_pic(1:numCur, WT_tem, "WT");
 %             end
-            EPAoIStruct = obj.Generate_EPAoIStruct(EPAoICur, IdToSortArray, numCur);    %激励生成结构体（未作选择时）
+            EPAoIStruct = obj.Generate_EPAoIStruct(EPAoICur, IdToSortArray, numCur);    %Stimulus generation structure (when not selected)
 
-            id_book = obj.find_terminal_with_data(terminal_obj);                        %找到有包的终端号
-            if(isempty(id_book))                                                        %没有终端有包
-                id = 0;                                                                 %不做调度
+            id_book = obj.find_terminal_with_data(terminal_obj);                        %Find the terminal number with the package
+            if(isempty(id_book))                                                        %no terminal has package
+                id = 0;                                                                 %no scheduling
                 return;
             end
-            if(length(id_book) == 1)                                                    %只有一个终端有包
-                id = id_book(1);                                                        %不做比较，直接调度
+            if(length(id_book) == 1)                                                    %Only one terminal has the package
+                id = id_book(1);                                                        %No comparison, direct scheduling
                 return
             end
             sort_book = sort(IdToSortArray(id_book));
 
             iter_num = 1;
-            id_k0 = SortToIdArray(sort_book(iter_num));%依次选取有包的终端中AoI（降序）的终端号
-            a_k0 = WTCur(id_k0);                     %排队时延
-            EPAoIChangeSruct = obj.Generate_EPAoIChangeStruct(0, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);        %0-生成结构体
+            id_k0 = SortToIdArray(sort_book(iter_num));%Select the terminal number of AoI (descending order) among the terminals with packets in turn
+            a_k0 = WTCur(id_k0);                     %queuing delay
+            EPAoIChangeSruct = obj.Generate_EPAoIChangeStruct(0, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);        %0 - generate structure
             while 1
                 for iter_part_num = iter_num + 1: length(id_book)
                     id_k = SortToIdArray(sort_book(iter_part_num));
                     EPAoIChangePartSruct = obj.Generate_EPAoIChangePartStruct(0, numCur, EPAoICur, id_k, IdToSortArray, SortToIdArray);
-                    %0-生成结构体
+                    %0 - generate structure
                     if(obj.Compare_Struct(EPAoIChangeSruct, EPAoIChangePartSruct, lambdaCur, pnCur, 1111, EPAoIStruct, 1111, 1111) == 1)  
-                        %前者更好（1111表示没有使用到的变量）
+                        %The former is better (1111 means unused variables)
                         id = id_k0;
-                        %disp(['情况1:', num2str(IdToSortArray(id)), ' ', num2str(id)]);
                         return;
                     end
-                    %后者粗略更好
+                    %the latter is roughly better
                     a_k = WTCur(id_k);
-                    EPAoIChangeSruct2 = obj.Generate_EPAoIChangeStruct(0, numCur, id_k, a_k, AoICur, lambdaCur, pnCur); %0-生成结构体
-                    if(obj.Compare_Struct(EPAoIChangeSruct, EPAoIChangeSruct2, lambdaCur, pnCur, 1111, EPAoIStruct, 1111, 1111) == 1)     %前者更好
-                        if(iter_part_num == length(id_book))                                                            %已经比较完成
+                    EPAoIChangeSruct2 = obj.Generate_EPAoIChangeStruct(0, numCur, id_k, a_k, AoICur, lambdaCur, pnCur); %
+                    if(obj.Compare_Struct(EPAoIChangeSruct, EPAoIChangeSruct2, lambdaCur, pnCur, 1111, EPAoIStruct, 1111, 1111) == 1)
+                        if(iter_part_num == length(id_book))                                                            %Already compared
                             id = id_k0;
-                            %disp(['情况2:', num2str(IdToSortArray(id)), ' ',num2str(id)]);
                             return;
                         end
                         continue;
                     end
-                    %后者更好
+                    %the latter is better
                     iter_num = iter_part_num;
-                    if(iter_num == length(id_book))%只剩最后一个了
+                    if(iter_num == length(id_book))%only one left
                         id = id_k;
-                        %disp(['情况3:', num2str(IdToSortArray(id)), ' ',num2str(id)]);
                         return
                     end
                     break;
                 end
 
-                id_k0 = SortToIdArray(sort_book(iter_num));%依次选取有包的终端中AoI（降序）的终端号
-                a_k0 = WTCur(id_k0);                       %排队时延
-                EPAoIChangeSruct = obj.Generate_EPAoIChangeStruct(0, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);    %0-生成结构体
+                id_k0 = SortToIdArray(sort_book(iter_num));%Select the terminal number of AoI (descending order) among the terminals with packets in turn
+                a_k0 = WTCur(id_k0);                       %queuing delay
+                EPAoIChangeSruct = obj.Generate_EPAoIChangeStruct(0, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur); 
             end
         end
         
-        %改进阶梯调度策略
+        %Improved Ladder Scheduling Strategy
         function id = strategy_ladderpro(obj, terminal_obj, ts, fast_flag)
             persistent EPAoImax
             if isempty(EPAoImax) || (ts == 1)
@@ -396,7 +394,7 @@ classdef Strategy < handle
             [id, EPAoImax] = obj.ladderpro_func(terminal_obj, ts, fast_flag, id_book, EPAoImax);
         end
 
-        %改进阶梯调度策略
+        %Improved Ladder Scheduling Strategy based on weight
         function id = strategy_ladderpro_wb(obj, terminal_obj, ts, fast_flag)
             persistent wEPAoImax
             if isempty(wEPAoImax) || (ts == 1)
@@ -406,8 +404,9 @@ classdef Strategy < handle
             [id, wEPAoImax] = obj.ladderpro_wb_func(terminal_obj, ts, fast_flag, id_book, wEPAoImax);
         end
         
-        %杂交策略
-        %在调度比例不超标的终端里，使用，当AoI相同时,调排队时延最小，当排队时延相同，随机调度
+        %hybrid strategy
+        %In the terminal where the scheduling ratio does not exceed the standard, use, 
+        % when the AoI is the same, adjust the queuing delay to be the smallest, and when the queuing delay is the same, randomly schedule
         function id = strategy_hybrid(obj, terminal_obj, ts, fast_flag)
             persistent wEPAoImax
             if isempty(wEPAoImax) || (ts == 1)
@@ -430,15 +429,15 @@ classdef Strategy < handle
                 return;
             end
             
-            %在调度比例中的终端使用
+            %Terminal use in dispatch ratios
             [id, wEPAoImax] = obj.ladderpro_wb_func(terminal_obj, ts, fast_flag, id_book, wEPAoImax);
 
         end
     end
 
-    %一些公用的调度方法（只能在调度策略里使用，不能单独使用）
+    %Some public scheduling methods (can only be used in the scheduling strategy, not alone)
     methods(Access = private)
-        %主体的贪心策略
+        %Agent's Greedy Strategy
         function id = greedy_func(obj, terminal_obj, ~, id_book)
             if(isempty(id_book))
                 id = 0;
@@ -446,14 +445,14 @@ classdef Strategy < handle
             end
 
 
-            AoI_tem = terminal_obj.AoIdata(id_book, 2, 1); %选出AoI
+            AoI_tem = terminal_obj.AoIdata(id_book, 2, 1); %Select AoI
             id_book = id_book(AoI_tem == max(AoI_tem));
 
             if(length(id_book) == 1)
                 id = id_book(1);
                 return
             end
-            WTCur = terminal_obj.AoIdata(:, 2, 2);             %当前时刻每个终端的排队时延
+            WTCur = terminal_obj.AoIdata(:, 2, 2);             %The queuing delay of each terminal at the current moment
             id_book = id_book(WTCur(id_book) == min(WTCur(id_book)));
             if(length(id_book) == 1)
                 id = id_book(1);
@@ -462,13 +461,13 @@ classdef Strategy < handle
             id = id_book(obj.Generate_roulette(length(id_book), 1./(terminal_obj.lambda(id_book) ) ));
         end
         
-        %基于权重的主体贪心策略
+        %Weight-based Agent Greedy Strategy
         function id = greedy_wb_func(obj, terminal_obj, ~, id_book)
             if(isempty(id_book))
                 id = 0;
                 return;
             end
-            %选出加权AoI
+            %Select Weighted AoI
             wAoI_tem = terminal_obj.AoIdata(id_book, 2, 1) .* terminal_obj.alpha(id_book);
             id_book = id_book(wAoI_tem == max(wAoI_tem));
             if(length(id_book) == 1)
@@ -485,24 +484,24 @@ classdef Strategy < handle
             id = id_book(obj.Generate_roulette(length(id_book), 1./terminal_obj.lambda(id_book)));
         end
 
-        %基于权重的梯子策略的主体
+        %The main body of the weight-based ladder strategy
         function [id, EPAoImax] = ladderpro_func(obj, terminal_obj, ts, fast_flag, id_book, EPAoImax) 
-            %fast_flag 是否使用快速算法(0-不使用 1使用)
+            %fast_flag Whether to use the fast algorithm (0-not use 1 use)
             if(ts <= terminal_obj.num && fast_flag)
                 id = obj.greedy_func(terminal_obj, ts, id_book);
                 return;
             end
-            AoICur = terminal_obj.AoIdata(:, 2, 1);                        %当前时隙每个终端的信息年龄(num*1)
-            lambdaCur = terminal_obj.lambda;                                %每个终端的包到达概率（num*1）
-            pnCur = terminal_obj.pn;                                        %每个终端的包传输失败概率
-            numCur = terminal_obj.num;                                      %终端数量
-            WTCur = terminal_obj.AoIdata(:, 2, 2);                         %当前时刻每个终端的排队时延
+            AoICur = terminal_obj.AoIdata(:, 2, 1);                        %The AoI of each terminal in the current slot(num*1)
+            lambdaCur = terminal_obj.lambda;                                %Packet Arrival Probability for Each Endpoint（num*1）
+            pnCur = terminal_obj.pn;                                        %Probability of packet transmission failure for each terminal
+            numCur = terminal_obj.num;                                      %Number of terminals
+            WTCur = terminal_obj.AoIdata(:, 2, 2);                         %The queuing delay of each terminal at the current moment
             [~, SortToIdArray] = sort(-(AoICur - 0.5 * lambdaCur .* (1 - pnCur)));                                                                                                                                                    
 
-            EPAoI_sort = AoICur(SortToIdArray) + (1:numCur)' - 1;                       %计算EPAoI
+            EPAoI_sort = AoICur(SortToIdArray) + (1:numCur)' - 1;                       %Calculate EPAoI
             assert(size(EPAoI_sort, 2) == 1)
             [~, IdToSortArray] = sort(SortToIdArray);
-            EPAoICur = EPAoI_sort(IdToSortArray);                                       %EPAoI每个位置与每个终端号对应
+            EPAoICur = EPAoI_sort(IdToSortArray);                                       %Each position of EPAoI corresponds to each terminal number
 
             if(EPAoImax < max(EPAoICur))
                 EPAoImax = max(EPAoICur);
@@ -518,81 +517,78 @@ classdef Strategy < handle
 %                 f3 = figure(3);
 %                 obj.stem_pic(1:numCur, WT_tem, "WT", f3);
 %             end
-            EPAoIStruct = obj.Generate_EPAoIStruct(EPAoICur, IdToSortArray, numCur);    %激励生成结构体（未作选择时）
+            EPAoIStruct = obj.Generate_EPAoIStruct(EPAoICur, IdToSortArray, numCur);    %Stimulus generation structure (when not selected)
 
-            if(isempty(id_book))                                                        %没有终端有包
-                id = 0;                                                                 %不做调度
+            if(isempty(id_book))                                                        %no terminal has package
+                id = 0;                                                                 %no scheduling
                 return;
             end
-            if(length(id_book) == 1)                                                    %只有一个终端有包
-                id = id_book(1);                                                        %不做比较，直接调度
+            if(length(id_book) == 1)                                                    %Only one terminal has the package
+                id = id_book(1);                                                        %No comparison, direct scheduling
                 return
             end
             sort_book = sort(IdToSortArray(id_book));
 
             iter_num = 1;
-            id_k0 = SortToIdArray(sort_book(iter_num)); %依次选取有包的终端中AoI（降序）的终端号
-            a_k0 = WTCur(id_k0);                        %排队时延
-            EPAoIChangeCur = obj.Generate_EPAoIChangeStruct(1, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);          %1-返回EPAoICur
+            id_k0 = SortToIdArray(sort_book(iter_num)); %Select the terminal number of AoI (descending order) among the terminals with packets in turn
+            a_k0 = WTCur(id_k0);                        %queuing delay
+            EPAoIChangeCur = obj.Generate_EPAoIChangeStruct(1, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);          %1 - return EPAoICur
             while 1
                 for iter_part_num = iter_num + 1: length(id_book)
                     id_k = SortToIdArray(sort_book(iter_part_num));
                     EPAoIChangePartCur = obj.Generate_EPAoIChangePartStruct(1, numCur, EPAoICur, id_k, IdToSortArray, SortToIdArray);
-                    %1-生成EPAoICur
+                    %1- Generate EPAoICur
                     if(obj.Compare_StructPro(EPAoIChangeCur, EPAoIChangePartCur, lambdaCur, pnCur, ...
-                            EPAoImax, EPAoIStruct, IdToSortArray, 1111) == 1)                                           %前者更好                                        
+                            EPAoImax, EPAoIStruct, IdToSortArray, 1111) == 1)                                           %the former is better                                      
                         id = id_k0;
-                        %disp(['情况1:', num2str(IdToSortArray(id)), ' ', num2str(id)]);
                         return;
                     end
-                    %后者粗略更好
+                    %the latter is roughly better
                     a_k = WTCur(id_k);
-                    EPAoIChangeCur2 = obj.Generate_EPAoIChangeStruct(1, numCur, id_k, a_k, AoICur, lambdaCur, pnCur); %1-返回EPAoICur
+                    EPAoIChangeCur2 = obj.Generate_EPAoIChangeStruct(1, numCur, id_k, a_k, AoICur, lambdaCur, pnCur); %1 - return EPAoICur
                     if(obj.Compare_StructPro(EPAoIChangeCur, EPAoIChangeCur2, lambdaCur, pnCur, ...
-                            EPAoImax, EPAoIStruct, IdToSortArray, 1111) == 1)                                           %前者更好
-                        if(iter_part_num == length(id_book))                                                            %已经比较完成
+                            EPAoImax, EPAoIStruct, IdToSortArray, 1111) == 1)                                           %the former is better
+                        if(iter_part_num == length(id_book))                                                            %Already compared
                             id = id_k0;
-                            %disp(['情况2:', num2str(IdToSortArray(id)), ' ',num2str(id)]);
                             return;
                         end
                         continue;
                     end
-                    %后者更好
+                    %the latter is better
                     iter_num = iter_part_num;
-                    if(iter_num == length(id_book))%只剩最后一个了
+                    if(iter_num == length(id_book))%only one left
                         id = id_k;
-                        %disp(['情况3:', num2str(IdToSortArray(id)), ' ',num2str(id)]);
                         return
                     end
                     break;
                 end
 
-                id_k0 = SortToIdArray(sort_book(iter_num));%依次选取有包的终端中AoI（降序）的终端号
-                a_k0 = WTCur(id_k0);                       %排队时延
-                EPAoIChangeCur = obj.Generate_EPAoIChangeStruct(1, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);    %1-返回EPAoICur
+                id_k0 = SortToIdArray(sort_book(iter_num));%Select the terminal number of AoI (descending order) among the terminals with packets in turn
+                a_k0 = WTCur(id_k0);                       %queuing delay
+                EPAoIChangeCur = obj.Generate_EPAoIChangeStruct(1, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);    %1 - return EPAoICur
             end
         end
 
-        %基于权重的梯子策略的主体
+        %The main body of the weight-based ladder strategy
         function [id, wEPAoImax] = ladderpro_wb_func(obj, terminal_obj, ts, fast_flag, id_book, wEPAoImax)
-            %fast_flag 是否使用快速算法(0-不使用 1使用)
+            %fast_flag Whether to use the fast algorithm (0-不使用 1使用)
             if(ts <= terminal_obj.num && fast_flag)
                 id = obj.greedy_wb_func(terminal_obj, ts, id_book);
                 return;
             end
-            AoICur = terminal_obj.AoIdata(:, 2, 1);                        %当前时隙每个终端的信息年龄(num*1)
-            alphaCur = terminal_obj.alpha;                                  %每个终端的权重
-            lambdaCur = terminal_obj.lambda;                                %每个终端的包到达概率（num*1）
-            pnCur = terminal_obj.pn;                                        %每个终端的包传输失败概率
-            numCur = terminal_obj.num;                                      %终端数量
-            WTCur = terminal_obj.AoIdata(:, 2, 2);                         %当前时刻每个终端的排队时延
+            AoICur = terminal_obj.AoIdata(:, 2, 1);                        %The AoI of each terminal in the current slot(num*1)
+            alphaCur = terminal_obj.alpha;                                  %weight for each terminal
+            lambdaCur = terminal_obj.lambda;                                %Packet Arrival Probability for Each Endpoint（num*1）
+            pnCur = terminal_obj.pn;                                        %Probability of packet transmission failure for each terminal
+            numCur = terminal_obj.num;                                      %Number of terminals
+            WTCur = terminal_obj.AoIdata(:, 2, 2);                         %The queuing delay of each terminal at the current moment
             [~, SortToIdArray] = sort(-(AoICur - 0.5 * lambdaCur .* (1 - pnCur)));                                                                                                                                                    
 
-            EPAoI_sort = AoICur(SortToIdArray) + (1:numCur)' - 1;           %计算EPAoI
+            EPAoI_sort = AoICur(SortToIdArray) + (1:numCur)' - 1;           %
             assert(size(EPAoI_sort, 2) == 1)
             [~, IdToSortArray] = sort(SortToIdArray);
-            EPAoICur = EPAoI_sort(IdToSortArray);                           %EPAoI每个位置与每个终端号对应
-            wPAoICur = EPAoICur .* alphaCur;                                %加权EPAoI
+            EPAoICur = EPAoI_sort(IdToSortArray);                           %Each position of EPAoI corresponds to each terminal number
+            wPAoICur = EPAoICur .* alphaCur;                                %Weighted EPAoI
 
             if(wEPAoImax < max(wPAoICur))
                 wEPAoImax = max(wPAoICur);
@@ -608,62 +604,59 @@ classdef Strategy < handle
 %                 f3 = figure(3);
 %                 obj.stem_pic(1:numCur, WT_tem, "WT", f3);
 %             end
-            EPAoIStruct = obj.Generate_EPAoIStruct(EPAoICur, IdToSortArray, numCur);    %激励生成结构体（未作选择时）
+            EPAoIStruct = obj.Generate_EPAoIStruct(EPAoICur, IdToSortArray, numCur);    %Stimulus generation structure (when not selected)
 
-            if(isempty(id_book))                                                        %没有终端有包
-                id = 0;                                                                 %不做调度
+            if(isempty(id_book))                                                        %no terminal has package
+                id = 0;                                                                 %no scheduling
                 return;
             end
-            if(length(id_book) == 1)                                                    %只有一个终端有包
-                id = id_book(1);                                                        %不做比较，直接调度
+            if(length(id_book) == 1)                                                    %Only one terminal has the package
+                id = id_book(1);                                                        %No comparison, direct scheduling
                 return
             end
             sort_book = sort(IdToSortArray(id_book));
 
             iter_num = 1;
-            id_k0 = SortToIdArray(sort_book(iter_num)); %依次选取有包的终端中AoI（降序）的终端号
-            a_k0 = WTCur(id_k0);                        %排队时延
-            EPAoIChangeCur = obj.Generate_EPAoIChangeStruct(1, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);          %1-返回EPAoICur
+            id_k0 = SortToIdArray(sort_book(iter_num)); %Select the terminal number of AoI (descending order) among the terminals with packets in turn
+            a_k0 = WTCur(id_k0);                        %queuing delay
+            EPAoIChangeCur = obj.Generate_EPAoIChangeStruct(1, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);          %1 - return EPAoICur
             while 1
                 for iter_part_num = iter_num + 1: length(id_book)
                     id_k = SortToIdArray(sort_book(iter_part_num));
                     EPAoIChangePartCur = obj.Generate_EPAoIChangePartStruct(1, numCur, EPAoICur, id_k, IdToSortArray, SortToIdArray);
-                    %1-生成EPAoICur
+                    %1- Generate EPAoICur
                     if(obj.Compare_StructPro_wb(EPAoIChangeCur, EPAoIChangePartCur, lambdaCur, pnCur, ...
-                            wEPAoImax, EPAoIStruct, IdToSortArray, alphaCur) == 1)                                                 %前者更好
+                            wEPAoImax, EPAoIStruct, IdToSortArray, alphaCur) == 1)                                                 %the former is better
                         id = id_k0;
-                        %disp(['情况1:', num2str(IdToSortArray(id)), ' ', num2str(id)]);
                         return;
                     end
-                    %后者粗略更好
+                    %the latter is roughly better
                     a_k = WTCur(id_k);
-                    EPAoIChangeCur2 = obj.Generate_EPAoIChangeStruct(1, numCur, id_k, a_k, AoICur, lambdaCur, pnCur); %1-返回EPAoICur
+                    EPAoIChangeCur2 = obj.Generate_EPAoIChangeStruct(1, numCur, id_k, a_k, AoICur, lambdaCur, pnCur); %1-return EPAoICur
                     if(obj.Compare_StructPro_wb(EPAoIChangeCur, EPAoIChangeCur2, lambdaCur, pnCur, ...
-                            wEPAoImax, EPAoIStruct, IdToSortArray, alphaCur) == 1)                                     %前者更好
-                        if(iter_part_num == length(id_book))                                                           %已经比较完成
+                            wEPAoImax, EPAoIStruct, IdToSortArray, alphaCur) == 1)                                     %the former is better
+                        if(iter_part_num == length(id_book))                                                           %Already compared
                             id = id_k0;
-                            %disp(['情况2:', num2str(IdToSortArray(id)), ' ',num2str(id)]);
                             return;
                         end
                         continue;
                     end
-                    %后者更好
+                    %the latter is better
                     iter_num = iter_part_num;
-                    if(iter_num == length(id_book))%只剩最后一个了
+                    if(iter_num == length(id_book))%only one left
                         id = id_k;
-                        %disp(['情况3:', num2str(IdToSortArray(id)), ' ',num2str(id)]);
                         return
                     end
                     break;
                 end
 
-                id_k0 = SortToIdArray(sort_book(iter_num));%依次选取有包的终端中AoI（降序）的终端号
-                a_k0 = WTCur(id_k0);                       %排队时延
-                EPAoIChangeCur = obj.Generate_EPAoIChangeStruct(1, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);    %1-返回EPAoICur
+                id_k0 = SortToIdArray(sort_book(iter_num));%Select the terminal number of AoI (descending order) among the terminals with packets in turn
+                a_k0 = WTCur(id_k0);                       %queuing delay
+                EPAoIChangeCur = obj.Generate_EPAoIChangeStruct(1, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur);    %1-return EPAoICur
             end
         end
         
-        %proportion_nb的主体函数
+        %The main function of proportion_nb
         function id = proportion_nb_func(obj, terminal_obj,id_book, proportion)
             if isempty(id_book)
                 id = 0;
@@ -700,7 +693,7 @@ classdef Strategy < handle
             id = id_book(obj.Generate_roulette(length(id_book), terminal_obj.lambda(id_book)));
         end
 
-        %最大权重策略
+        %Maximum Weight Policy
         function id = strategy_mwAoI(obj, terminal_obj, ~, ~)
             id_book = obj.find_terminal_with_data(terminal_obj);
             if isempty(id_book)
@@ -723,7 +716,7 @@ classdef Strategy < handle
             id = id(randperm(length(id), 1));
         end
 
-        %惠特尔索引策略
+        %Whittle Indexing Strategy
         function id = strategy_WIP(obj, terminal_obj, ~, ~)
             id_book = obj.find_terminal_with_data(terminal_obj);
             if isempty(id_book)
@@ -739,7 +732,7 @@ classdef Strategy < handle
             d = h - a;
             lambda = terminal_obj.lambda(id_book);
             pn = terminal_obj.pn(id_book);
-            %模型下排队时延有0的情况，因而使用该策略最好lambda不要设置为1
+            %The queuing delay under the model is 0, so it is best not to set lambda to 1 when using this strategy
             x = ( d + 0.5 * a .* (a - 1) .* lambda ) ./ ( 1 - lambda + a.* lambda + eps);
             alpha = terminal_obj.alpha(id_book);
             WI = alpha .* d ./ lambda;
@@ -756,10 +749,10 @@ classdef Strategy < handle
 
     end
 
-    %一些功能函数
+    %some functions
     methods(Access = private)
 
-        %找到有包的终端
+        %Find the terminal with the package
         function id = find_terminal_with_data(~, terminal_obj)
             assert(class(terminal_obj) == "Terminal", "error input class -> terminal_obj")
             id = find(terminal_obj.data_state(:,1) == 1);
@@ -769,10 +762,10 @@ classdef Strategy < handle
         end
 
         function id = find_terminal_within_proportion(~, terminal_obj, id_book, mode, forward, proportion)
-            %mode为0时,返回terminal_obj中在调度比例中的终端id向量（列）
-            %mode为1时,返回id_book中在调度比例中的终端id向量（列）
+            %When mode is 0, return the terminal id vector (column) in the scheduling ratio in terminal_obj
+            %When mode is 1, return the terminal id vector (column) in the scheduling ratio in id_book
 
-            %forward为1，省略一些报错， 默认为0
+            %forward is 1, some error reports are omitted, the default is 0
             switch nargin
                 case 4
                     forward = 0;
@@ -787,14 +780,14 @@ classdef Strategy < handle
             mat_tem = (1:terminal_obj.num)';
             switch mode
                 case 0
-                    %找到在调度比例里的包
+                    %find the package in the dispatch scale
                     index_tem = terminal_obj.Scheduling_Times./sum(terminal_obj.Scheduling_Times) <= proportion;
                     id = mat_tem(index_tem);
                     return
 
                 case 1
-                    %检查id_book
-                    assert(~isempty(id_book) || f_flag, "invalid input(empty) -> id_book" );%flag为1则允许id_book为空
+                    %check id_book
+                    assert(~isempty(id_book) || f_flag, "invalid input(empty) -> id_book" );%flag is 1 to allow id_book to be empty
                     if(isempty(id_book))
                         if(~f_flag)
                             warning(["find_terminal_within_proportion:return []" newline "->input id_book is empty"]);
@@ -805,13 +798,13 @@ classdef Strategy < handle
                     
                     assert((max(id_book) <= terminal_obj.num) && min(id_book) > 0, ["error input value -> id_book" newline mat2str(id_book)]);
                     if(sum(terminal_obj.Scheduling_Times(id_book)) == 0)
-                        index_tem = id_book ~= 0;%这里只是做一个逻辑转换生成一个和id_book size相同的全1逻辑向量
+                        index_tem = id_book ~= 0;%Here just do a logical conversion to generate a logical vector of all 1s with the same size as id_book
                     else 
                         index_tem = terminal_obj.Scheduling_Times(id_book)./sum(terminal_obj.Scheduling_Times(id_book)) ...
                         <= proportion(id_book);
                     end
 
-                    if(~any(index_tem))%没有一个满足条件
+                    if(~any(index_tem))%None of the conditions are met
                         if(~f_flag)
                             warning(['find_terminal_within_proportion:return []' newline '-> None of the terminals meet the conditions']);
                         end
@@ -826,9 +819,9 @@ classdef Strategy < handle
 
         end
         
-        %产生轮盘并返回结果
+        %Generate a roulette wheel and return the result
         function id = Generate_roulette(~, n, pro_set)
-            %返回值为抽中的序号
+            %The return value is the serial number drawn
             id_array = 1:n;
             pro_set = pro_set/sum(pro_set);
             pro_array = cumsum(pro_set);
@@ -854,38 +847,38 @@ classdef Strategy < handle
 
     end
 
-    %阶梯策略使用到的函数
+    %Functions used by the ladder strategy
     methods(Access = private)
-        %激励生成EPAoI相关数据结构体
+        %Incentives to generate EPAoI-related data structures
         function value_struct = Generate_EPAoIStruct(~, EPAoICur, IdToSortArray, numCur)
-            %返回值:读取EPAoI中终端的id号  
+            %Return value: read the id number of the terminal in EPAoI 
             % value_struct.ter_mat(1:value_struct.count(EPAoI),value_struct.mat_index(EPAoI))
-            % 为空则表示无对应EPAoI
-            assert((size(EPAoICur, 1) > 1) && (size(EPAoICur, 2) == 1), 'error input -> EPAoICur');%需要为列向量
+            % If it is empty, it means that there is no corresponding EPAoI
+            assert((size(EPAoICur, 1) > 1) && (size(EPAoICur, 2) == 1), 'error input -> EPAoICur');%Needs to be a column vector
             value_tem = tabulate(EPAoICur);
-            value_tem = value_tem((value_tem(:, 2) ~= 0) & (value_tem(:, 1) ~= 0), 1:2);           %除去EPAoI为0和统计数量为0的行
-            EPAoI_stat = value_tem(:, 1);           %包含有哪些
-            count_stat = value_tem(:, 2);           %包含的数量
-            num_EPAoI = numCur + 2000;              %表的默认长度为num_EPAoI
-            value = (1:num_EPAoI)';                 %行数对应EPAoI 便于查询
+            value_tem = value_tem((value_tem(:, 2) ~= 0) & (value_tem(:, 1) ~= 0), 1:2);           %Remove rows with EPAoI of 0 and statistics of 0
+            EPAoI_stat = value_tem(:, 1);           %what are included
+            count_stat = value_tem(:, 2);           %Quantity included
+            num_EPAoI = numCur + 2000;              %The default length of the table is num_EPAoI
+            value = (1:num_EPAoI)';                 %The number of rows corresponds to EPAoI for easy query
             mat_index = zeros(num_EPAoI, 1);
             count = zeros(num_EPAoI, 1);
             ter_mat = zeros(numCur, numCur);
             sort_mat = zeros(numCur, numCur);
             
-            mat_tem = repmat((1:numCur)', 1, numCur);%用于制作逻辑表
-            %相应数据写入表中
-            %EPAoI可能有为0的情况
+            mat_tem = repmat((1:numCur)', 1, numCur);%for making logical tables
+            %The corresponding data is written into the table
+            %EPAoI may be 0
             assert(~any(EPAoI_stat == 0), "value error -> EPAoI = 0");
             mat_index(EPAoI_stat) = 1:length(EPAoI_stat);
             index = find(EPAoICur == EPAoI_stat');
-            %关于该用法的说明
+            %Notes on the usage
             %EPAoICur = [7 8 6 7 7]';
             %EPAoI_stat = [6 7 8]';
             %find(EPAoICur = EPAoI_stat')
-            %效果repmat(EPAoICur, 1, length(EPAoI_stat'))
-            %在第i列中找EPAoI_stat'(i) 返回列向索引
-            assert((size(index, 1) > 1) && (size(index, 2) == 1), "error");%应为列向量
+            %Effect repmat(EPAoICur, 1, length(EPAoI_stat'))
+            %Find EPAoI_stat'(i) in the i-th column and return the column-oriented index
+            assert((size(index, 1) > 1) && (size(index, 2) == 1), "error");%Should be a column vector
             len_E = length(EPAoICur);
             while 1
                 if(any(index > len_E))
@@ -895,8 +888,7 @@ classdef Strategy < handle
                 end
             end
         
-            mat_index_tem = mat_tem <= [count_stat', zeros(1, numCur - length(count_stat))];%制作矩阵逻辑索引（矩阵使用此索引返回为列向量）
-            %这一步出来的结果还有点问题
+            mat_index_tem = mat_tem <= [count_stat', zeros(1, numCur - length(count_stat))];%Make matrix logical indexing (matrix is returned as a column vector using this indexing)
             ter_mat(mat_index_tem) = index;
             sort_mat(mat_index_tem) = IdToSortArray(index);
             
@@ -910,14 +902,14 @@ classdef Strategy < handle
             value_struct.EPAoIMat = value_tem;
         end
 
-        %生成EPAoIChangeSruct
+        %Generate EPAoIChangeSruct
         function value = Generate_EPAoIChangeStruct(obj, flag, numCur, id_k0, a_k0, AoICur, lambdaCur, pnCur)
-            %flag 0 - 返回EPAoIChangeStruct 1 - 返回EPAoICur
+            %flag 0 - returns EPAoIChangeStruct 1 - returns EPAoICur
             AoICur = AoICur + 1;
             AoICur(id_k0) = a_k0 + 1;
 
             [~, SortToIdArray] = sort(-(AoICur - 0.5 * lambdaCur .* (1 - pnCur)));
-            EPAoI_sort = AoICur(SortToIdArray) + (1:numCur)' - 1;                       %计算EPAoI
+            EPAoI_sort = AoICur(SortToIdArray) + (1:numCur)' - 1;                       %Calculate EPAoI
             [~, IdToSortArray] = sort(SortToIdArray);
             EPAoICur = EPAoI_sort(IdToSortArray);
             if(flag)
@@ -928,9 +920,9 @@ classdef Strategy < handle
             value = EPAoIChangeStruct;
         end
 
-        %生成EPAoIChangePartSruct
-        function value = Generate_EPAoIChangePartStruct(obj, flag, numCur, EPAoICur, id_k, IdToSortArray, SortToIdArray)%使用原来的IdToSortArray
-            %flag 0 - 返回EPAoIChangeStruct 1 - 返回EPAoICur
+        %
+        function value = Generate_EPAoIChangePartStruct(obj, flag, numCur, EPAoICur, id_k, IdToSortArray, SortToIdArray)%Use the original IdToSortArray
+            %flag 0 - returns EPAoIChangeStruct 1 - returns EPAoICur
             index_id = 1:numCur;
             index_sort = IdToSortArray(index_id);
             index_sort = index_sort(index_sort < IdToSortArray(id_k));
@@ -947,16 +939,16 @@ classdef Strategy < handle
             value = EPAoIChangePartStruct;
         end
 
-        %返回比较结果
+        %return comparison result
         function value = Compare_Struct(~, Struct_front, Struct_after, lambdaCur, pnCur, ~, EPAoIStruct, ~, ~)
-            %关于返回值 1-前者更好  0-后者更好
+            %Regarding the return value 1 - the former is better 0 - the latter is better
             recCur = lambdaCur.*(1 - pnCur);
             s1 = Struct_front;
             s2 = Struct_after;
 
             eps = EPAoIStruct;
 
-            %获取相关数据
+            %Get related data
             s1_maxEP = max(s1.EPAoIMat(:, 1));
             s2_maxEP = max(s2.EPAoIMat(:, 1));
 
@@ -968,10 +960,10 @@ classdef Strategy < handle
                 return
             end
             
-            %最大EPAoI相等的情况
+            %The case where the maximum EPAoI is equal
             index = s1_maxEP;
             while 1
-                if(s1.count(index) + s2.count(index) == 0)%均无
+                if(s1.count(index) + s2.count(index) == 0)%None
                     index = index - 1;
                     if(index == 0)
                         value = 1;
@@ -989,10 +981,10 @@ classdef Strategy < handle
                 end
 
                 c_flag = s1.count(index) >= eps.count(index);
-                %相等的情况，比较接收概率
+                %In the case of equality, compare the acceptance probability
                 arr1 = prod(recCur(s1.ter_mat(1:s1.count(index), s1.mat_index(index)) ) );
                 arr2 = prod(recCur(s2.ter_mat(1:s2.count(index), s2.mat_index(index)) ) );
-                if(c_flag) %越大越好
+                if(c_flag) %The bigger the better
                     if(arr1 < arr2)
                         value = 0;
                         return;
@@ -1000,7 +992,7 @@ classdef Strategy < handle
                         value = 1;
                         return
                     end
-                else    %越小越好
+                else    %The smaller the better
                     if(arr1 > arr2)
                         value = 0;
                         return;
@@ -1014,14 +1006,14 @@ classdef Strategy < handle
                     value = 1;
                     return
                 end
-                %相等比较下一个
+                %equal compare next
                 index = index - 1;
             end
 
         end
 
         function value = Compare_StructPro(obj, EPH_front, EPH_after, lambdaCur, pnCur, EPAoImx, EPAoIStruct, IdToSortArray, ~)
-            %关于返回值 1-前者更好  0-后者更好
+            %Regarding the return value 1 - the former is better 0 - the latter is better
             e1 = EPH_front;
             e2 = EPH_after;
             
@@ -1057,7 +1049,7 @@ classdef Strategy < handle
 
             value2 = prod( 1 - Prk );
 
-            if(value1 + value2 == 0)                                    %得到不突破现有EPAoI最大值的概率都为零
+            if(value1 + value2 == 0)                                    %The probability of not breaking through the existing EPAoI maximum is zero
                 s1 = obj.Generate_EPAoIStruct(e1, IdToSortArray, length(e1));
                 s2 = obj.Generate_EPAoIStruct(e2, IdToSortArray, length(e2));
                 value = obj.Compare_Struct(s1, s2, lambdaCur, pnCur, 1111, EPAoIStruct, 1111, 1111);
@@ -1073,7 +1065,7 @@ classdef Strategy < handle
         end
     
         function value = Compare_StructPro_wb(obj, EPH_front, EPH_after, lambdaCur, pnCur, wEPAoImx, EPAoIStruct, IdToSortArray, alphaCur) 
-            %关于返回值 1-前者更好  0-后者更好
+            %Regarding the return value 1 - the former is better 0 - the latter is better
             recCur = lambdaCur.*(1 - pnCur);
             e1 = EPH_front;
             e2 = EPH_after;
@@ -1081,21 +1073,21 @@ classdef Strategy < handle
             w_e2 = alphaCur .* e2;
 
             assert(all(size(w_e1) == size(w_e2)));
-            f = @(array) mod(array, 1) == 0;            %找出整数的逻辑索引
+            f = @(array) mod(array, 1) == 0;            %Find the logical index of an integer
             mk1 = (wEPAoImx - w_e1) .* (1 ./ alphaCur);
             index_logi = f(mk1);
-            mk1(~index_logi) = ceil(mk1(~index_logi));    %非整数向上取整
-            mk1(index_logi) = mk1(index_logi) + 1;    %整数加1
+            mk1(~index_logi) = ceil(mk1(~index_logi));    %Non-integer round up
+            mk1(index_logi) = mk1(index_logi) + 1;    %
 
             mk2 = (wEPAoImx - w_e2) .* (1 ./ alphaCur);
             index_logi = f(mk2);
-            mk2(~index_logi) = ceil(mk2(~index_logi));    %非整数向上取整
-            mk2(index_logi) = mk2(index_logi) + 1;    %整数加1
+            mk2(~index_logi) = ceil(mk2(~index_logi));    %Non-integer round up
+            mk2(index_logi) = mk2(index_logi) + 1;    %Integer plus 1
 
             value1 = prod( 1 - (1 - recCur) .^ mk1 );
             value2 = prod( 1 - (1 - recCur) .^ mk2 );
 
-            if(value1 + value2 == 0)                    %得到不突破现有EPAoI最大值的概率都为零
+            if(value1 + value2 == 0)                    %The probability of not breaking through the existing EPAoI maximum is zero
                 s1 = obj.Generate_EPAoIStruct(e1, IdToSortArray, length(e1));
                 s2 = obj.Generate_EPAoIStruct(e2, IdToSortArray, length(e2));
                 value = obj.Compare_Struct(s1, s2, lambdaCur, pnCur, 1111, EPAoIStruct, 1111, 1111);

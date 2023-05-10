@@ -1,20 +1,20 @@
 classdef System < handle
     properties(Access = public)
-        system_ts       %该次仿真下的ts
-        system_M        %该次仿真下的终端数
-        terminal_obj    %cell simulation_num*1 终端类
-        simulation_num  %仿真次数
-        simulation_mode %仿真模式
+        system_ts       %ts under this simulation
+        system_M        %The number of terminals under this simulation
+        terminal_obj    %cell simulation_num*1 terminal class
+        simulation_num  %Number of simulations
+        simulation_mode %
         simulation_t_block
-        pAoI_avg_r      %平均峰值信息年龄记录 simulation_num*1
-        AoI_avg_r       %平均信息年龄记录 simulation_num*1
-        pAoI_max_r      %最大峰值信息年龄记录 simulation_num*1
+        pAoI_avg_r      %Average Peak Information Age Records simulation_num*1
+        AoI_avg_r       %Average Information Age Records simulation_num*1
+        pAoI_max_r      %Maximum peak information age record simulation_num*1
     end
 
     methods(Access = public)
-        %构造函数
-        function obj = System(simulation_num_in, terminal_num_in, ts_t, lambda_in, pn_in, strategy_name_in, alpha_in, random_mode, simu_mode)%所有指标统一 strategy_name_in(元胞)
-            assert(simulation_num_in>0, 'simulation_num_in输入错误');
+        %Constructor
+        function obj = System(simulation_num_in, terminal_num_in, ts_t, lambda_in, pn_in, strategy_name_in, alpha_in, random_mode, simu_mode)%
+            assert(simulation_num_in>0, 'simulation_num_in input error');
             obj.system_ts = ts_t;
             obj.system_M = terminal_num_in;
             obj.simulation_num = simulation_num_in;
@@ -29,7 +29,7 @@ classdef System < handle
             obj.simulation_t_block = ts_t;
         end
         
-        %开始模拟
+        %start simulation
         function [TLB, STI, MAI, TLBP] = Simulate(obj, show_info, show_info_struct)
             TLB = [];
             STI = [];
@@ -87,12 +87,12 @@ classdef System < handle
         end
 
 
-        %绘图，所有系统每个终端的pAoI比较（固定的）
+        %Plotting, comparison of pAoI per terminal for all systems (fixed)
         function [pic_obj, ax_obj, figure_obj] = Show_System_pAoI(obj, simulation_order)
             [pic_obj, ax_obj, figure_obj] = obj.terminal_obj{simulation_order}.pic_pAoIavg();
         end
 
-        %计算每次模拟平均峰值信息年龄
+        %Calculate the average peak message age per simulation
         function Calculate(obj)
             if(obj.simulation_mode == 0)
                 for i = 1:obj.simulation_num
@@ -102,7 +102,7 @@ classdef System < handle
                      obj.pAoI_max_r(i) = value_struct.pAoI_max_system;
                 end
             elseif(obj.simulation_mode == 1)
-                %重构大小
+                %reconstruction size
                 obj.pAoI_avg_r = zeros(obj.simulation_num, length(obj.system_ts));
                 obj.AoI_avg_r = zeros(obj.simulation_num, length(obj.system_ts));
                 obj.pAoI_max_r = zeros(obj.simulation_num, length(obj.system_ts));
