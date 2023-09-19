@@ -1,2 +1,16 @@
+# IDEs
+.vscode
 
+# Python
+*.ipynb
+*.pyc
+*.log
+*.data
+*.txt
+
+#Data
+__pycache__/
+data/saved/
+cache/
+data/datasets/
 
